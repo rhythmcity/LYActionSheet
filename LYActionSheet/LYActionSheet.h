@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface LYActionSheet : NSObject
+@interface LYActionSheet : UIView
 
 + (instancetype)LYActionSheetWithHeight:(CGFloat)height
                               BasicView:(UIView *)basicView
