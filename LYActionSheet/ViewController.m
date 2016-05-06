@@ -8,7 +8,6 @@
 
 #import "ViewController.h"
 #import "LYActionSheet.h"
-#import "detailViewController.h"
 @interface ViewController ()
 @property (nonatomic, strong)LYActionSheet *lyActionSheet;
 
@@ -19,26 +18,33 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
     self.view.backgroundColor = [UIColor whiteColor];
+    UIView *view = [[UIView alloc] init];
+    view.backgroundColor = [UIColor blackColor];
     
-
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(go)];
-    [self.view addGestureRecognizer:tap];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-   
-        
-              
-//        [self.lyActionSheet showActionSheet];
-    });
+    
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    [button setBackgroundColor:[UIColor blueColor]];
+    button.frame = CGRectMake(0, 0, 100, 100);
+    button.center = self.view.center;
+    [button setTitle:@"tap me " forState:UIControlStateNormal];
+    [button addTarget:self action:@selector(buttonClick:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:button];
+    self.lyActionSheet  = [[LYActionSheet alloc] initWithHeight:600 BasicView:self.navigationController.view ContentView:view];
+    
     
 
 }
-- (void)go {
-    detailViewController *dvc =[[detailViewController alloc] init];
-    [self.navigationController pushViewController:dvc animated:YES];
 
+
+- (void)buttonClick:(UIButton *)sender {
+    
+    [self.lyActionSheet showActionSheet];
+    
+    
+    
 }
+
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];

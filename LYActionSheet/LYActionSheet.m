@@ -7,8 +7,7 @@
 //
 
 #import "LYActionSheet.h"
-#import "Masonry/Masonry.h"
-static NSInteger const PathStartHeight = 44;
+static NSInteger const PathStartHeight =  44;
 @interface LYActionSheet ()
 @property (nonatomic, strong)CAShapeLayer *backgroundLayer;
 @property (nonatomic, strong)CADisplayLink *displayLink;
@@ -17,6 +16,9 @@ static NSInteger const PathStartHeight = 44;
 @property (nonatomic, strong)UIView *basicView;         //背景view  推出actionsheet 之前的展示的view
 @property (nonatomic, strong)UIView *motionView;        //运动view 用于弹出和消失的view
 @property (nonatomic, assign)CGFloat motionHeight;
+@property (nonatomic, assign)BOOL    isShow;
+@property (nonatomic, strong)UITapGestureRecognizer *tap;
+@property (nonatomic, strong)NSLayoutConstraint *motionViewconstrantHeight;
 @end
 
 @implementation LYActionSheet
@@ -24,18 +26,18 @@ static NSInteger const PathStartHeight = 44;
     if (self = [super init]) {
         
         _motionView = [[UIView alloc] init];
-        
+        _motionView.translatesAutoresizingMaskIntoConstraints = NO;
         _contentView = [[UIView alloc] init];
+        _contentView.translatesAutoresizingMaskIntoConstraints = NO;
         _view = [[UIView alloc] init];
-        _view.backgroundColor = [UIColor darkGrayColor];
+        _view.backgroundColor = [UIColor lightGrayColor];
         _view.alpha = 0;
         _view.userInteractionEnabled = NO;
+        _view.translatesAutoresizingMaskIntoConstraints = NO;
         [_motionView addSubview:_contentView];
         _backgroundLayer = [CAShapeLayer layer];
-//        self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(displaylinkAction:)];
-//        [self.displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-      
-//        [UIApplication sharedApplication].keyWindow.translatesAutoresizingMaskIntoConstraints = NO;
+        
+        _tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(backViewTap:)];
     }
     return self;
 }
@@ -53,43 +55,47 @@ static NSInteger const PathStartHeight = 44;
     self = [self init];
     self.basicView = basicView;
     self.motionHeight = height;
-//
-//    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-0-[contentView]-0-|" options:NSLayoutFormatAlignAllLeft metrics:nil views:@{@"contentView": self.contentView}]];
-//    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-0-[contentView]-0-|" options:NSLayoutFormatAlignAllLeft metrics:nil views:@{@"contentView": self.contentView}]];
-//    
+
+    NSLayoutConstraint *contentViewconstrantleft =  [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.motionView attribute:NSLayoutAttributeLeft multiplier:1 constant:0];
+    NSLayoutConstraint *contentViewconstrantright =  [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.motionView attribute:NSLayoutAttributeRight multiplier:1 constant:0];
+    NSLayoutConstraint *contentViewconstranttop = [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.motionView attribute:NSLayoutAttributeTop multiplier:1 constant:0];
+    NSLayoutConstraint *contentViewconstrantBottom =  [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.motionView attribute:NSLayoutAttributeBottom multiplier:1 constant:0];
     
-    [self.contentView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.edges.equalTo(self.motionView);
-    }];
+    [NSLayoutConstraint activateConstraints:@[contentViewconstrantleft,contentViewconstrantright,contentViewconstranttop,contentViewconstrantBottom]];
+
+    contentView.translatesAutoresizingMaskIntoConstraints = NO;
     self.contentView.backgroundColor = contentView.backgroundColor;
     [self.contentView addSubview:contentView];
     
-    [contentView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(self.contentView).offset(40);
-        make.leading.trailing.bottom.equalTo(self.contentView);
-    }];
-//    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-44-[contentView]-0-|" options:NSLayoutFormatAlignAllLeft metrics:nil views:@{@"contentView": contentView}]];
-//    [NSLayoutConstraint activateConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-0-[contentView]-0-|" options:NSLayoutFormatAlignAllLeft metrics:nil views:@{@"contentView": contentView}]];
-    [self addActionSheet];
+    
+    NSLayoutConstraint *viewconstrantleft =  [NSLayoutConstraint constraintWithItem:contentView attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeLeft multiplier:1 constant:0];
+    NSLayoutConstraint *viewconstrantright =  [NSLayoutConstraint constraintWithItem:contentView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeRight multiplier:1 constant:0];
+    NSLayoutConstraint *viewconstranttop = [NSLayoutConstraint constraintWithItem:contentView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeTop multiplier:1 constant:0];
+    NSLayoutConstraint *viewconstrantBottom =  [NSLayoutConstraint constraintWithItem:contentView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeBottom multiplier:1 constant:0];
+
+    [NSLayoutConstraint activateConstraints:@[viewconstrantleft,viewconstrantright,viewconstranttop,viewconstrantBottom]];
+
     return self;
 }
 
 - (void)addActionSheet {
     [[UIApplication sharedApplication].keyWindow addSubview:self.view];
-    [self.view mas_remakeConstraints:^(MASConstraintMaker *make) {
-        make.edges.mas_equalTo([UIApplication sharedApplication].keyWindow);
-    }];
-//    self.view.frame = [UIApplication sharedApplication].keyWindow.bounds;
+
+    NSLayoutConstraint *viewconstrantleft =  [NSLayoutConstraint constraintWithItem:self.view attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:[self.view superview] attribute:NSLayoutAttributeLeft multiplier:1 constant:0];
+    NSLayoutConstraint *viewconstrantright =  [NSLayoutConstraint constraintWithItem:self.view attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:[self.view superview] attribute:NSLayoutAttributeRight multiplier:1 constant:0];
+    NSLayoutConstraint *viewconstranttop = [NSLayoutConstraint constraintWithItem:self.view attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:[self.view superview] attribute:NSLayoutAttributeTop multiplier:1 constant:0];
+    NSLayoutConstraint *viewconstrantBottom =  [NSLayoutConstraint constraintWithItem:self.view attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:[self.view superview] attribute:NSLayoutAttributeBottom multiplier:1 constant:0];
+    [NSLayoutConstraint activateConstraints:@[viewconstrantleft,viewconstrantright,viewconstranttop,viewconstrantBottom]];
+
     [[UIApplication sharedApplication].keyWindow addSubview:self.motionView];
+
+   
+    NSLayoutConstraint *motionViewconstrantleft =  [NSLayoutConstraint constraintWithItem:self.motionView attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:[self.motionView superview] attribute:NSLayoutAttributeLeft multiplier:1 constant:0];
+    NSLayoutConstraint *motionViewconstrantright =  [NSLayoutConstraint constraintWithItem:self.motionView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:[self.motionView superview] attribute:NSLayoutAttributeRight multiplier:1 constant:0];
+    self.motionViewconstrantHeight = [NSLayoutConstraint constraintWithItem:self.motionView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:PathStartHeight];
+    NSLayoutConstraint *motionViewconstrantBottom =  [NSLayoutConstraint constraintWithItem:self.motionView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:[self.motionView superview] attribute:NSLayoutAttributeBottom multiplier:1 constant:0];
+    [NSLayoutConstraint activateConstraints:@[motionViewconstrantleft,motionViewconstrantright,self.motionViewconstrantHeight,motionViewconstrantBottom]];
     
-    [self.motionView mas_remakeConstraints:^(MASConstraintMaker *make) {
-        make.height.mas_equalTo(PathStartHeight);
-        make.leading.trailing.bottom.equalTo([UIApplication sharedApplication].keyWindow);
-    }];
-    
-//    self.motionView.frame = CGRectMake(0, [UIApplication sharedApplication].keyWindow.bounds.size.height - 94, [UIApplication sharedApplication].keyWindow.bounds.size.width, 94);
-//
-//    [[UIApplication sharedApplication].keyWindow setNeedsLayout];
     [[UIApplication sharedApplication].keyWindow layoutIfNeeded];
     
     
@@ -134,31 +140,20 @@ static NSInteger const PathStartHeight = 44;
 }
 
 - (void)animationToMotion:(CGFloat)height duration:(NSTimeInterval)duration {
-//    NSArray *array  =   self.motionView.constraints;
-//    
-//    for (NSLayoutConstraint *constraint  in array) {
-//        if (constraint.firstItem == self.motionView && constraint.firstAttribute == NSLayoutAttributeHeight) {
-//            
-//            constraint.constant = height;
-//        }
-//    }
+    NSArray *array  =   self.motionView.constraints;
+    for (NSLayoutConstraint *constraint  in array) {
+        if (constraint.firstItem == self.motionView && constraint.firstAttribute == NSLayoutAttributeHeight) {
+            constraint.constant = height;
+        }
+    }
     
-    
-    [self.motionView mas_updateConstraints:^(MASConstraintMaker *make) {
-        make.height.equalTo([NSNumber numberWithFloat:height]);
-    }];
     
     [UIView animateWithDuration:duration delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         [[UIApplication sharedApplication].keyWindow layoutIfNeeded];
         
-//        self.motionView.frame = CGRectMake(0, [UIApplication sharedApplication].keyWindow.bounds.size.height - height, [UIApplication sharedApplication].keyWindow.bounds.size.width, height);
     } completion:^(BOOL finished) {
         
     }];
-    
-    
-
-
 }
 
 - (void)animationToSpringPathFromValue:(CGFloat)fromValue toValue:(CGFloat)toValue duration:(NSTimeInterval)duration {
@@ -210,15 +205,18 @@ static NSInteger const PathStartHeight = 44;
 
 
 - (void)showActionSheet {
-   
+    if (self.isShow) {
+        return;
+    }
+    [self addActionSheet];
     [self animationToView:0.4 opactity:0.8];
     [self animationToStatusBar:0.8 style:UIStatusBarStyleLightContent];
-    [self animationToSpringPathFromValue:PathStartHeight toValue:0 duration:0.3];
+    [self animationToSpringPathFromValue:PathStartHeight toValue:PathStartHeight-44 duration:0.3];
     [self animationToBasicViewWithsx:1.02 sy:1.02 sz:1.02 duration:0.3];
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self animationToMotion:self.motionHeight duration:0.5];
-        [self animationToSpringPathFromValue:0 toValue:PathStartHeight+10 duration:0.3];
+        [self animationToSpringPathFromValue:PathStartHeight-44 toValue:PathStartHeight+10 duration:0.3];
         [self animationToBasicViewWithsx:0.89 sy:0.89 sz:0.89 duration:0.4];
     });
     
@@ -229,15 +227,62 @@ static NSInteger const PathStartHeight = 44;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.7 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self animationToSpringPathFromValue:PathStartHeight-10 toValue:PathStartHeight duration:0.1];
         [self animationToBasicViewWithsx:0.9 sy:0.9 sz:0.9 duration:0.1];
+        
+
     });
-   
+    
+    self.isShow = YES;
+    
+    
+    self.view.userInteractionEnabled = YES;
+    
+    [self.view addGestureRecognizer:self.tap];
 }
 
+- (void)removeActionSheet {
+    [NSLayoutConstraint deactivateConstraints:self.view.constraints];
+    [NSLayoutConstraint deactivateConstraints:@[self.motionViewconstrantHeight]];
+    [self.view removeFromSuperview];
+    [self.motionView removeFromSuperview];
+
+}
 - (void)hiddenActionSheet {
+    if (!self.isShow) {
+        return;
+    }
+    
+    [self animationToView:1.5 opactity:0];
+    [self animationToStatusBar:0.8 style:UIStatusBarStyleDefault];
+    [self animationToSpringPathFromValue:PathStartHeight toValue:PathStartHeight+50 duration:0.3];
+    [self animationToBasicViewWithsx:0.89 sy:0.89 sz:0.89 duration:0.3];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self animationToSpringPathFromValue:PathStartHeight + 50 toValue:PathStartHeight - 10 duration:0.1];
+       
+    });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self animationToSpringPathFromValue:PathStartHeight - 10 toValue:PathStartHeight-44 duration:0.3];
+        [self animationToMotion:PathStartHeight duration:0.3];
+       
+    });
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.7 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 
-
+        [self animationToBasicViewWithsx:1 sy:1 sz:1 duration:0.1];
+        [self animationToSpringPathFromValue:PathStartHeight-44 toValue:PathStartHeight duration:0.1];
+      
+    });
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        self.isShow = NO;
+        self.view.userInteractionEnabled = NO;
+        [self.view removeGestureRecognizer:self.tap];
+        [self removeActionSheet];
+    });
 }
 
+- (void)backViewTap:(UITapGestureRecognizer *)tap {
 
+    [self hiddenActionSheet];
+}
 
 @end
